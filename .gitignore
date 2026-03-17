@@ -1,0 +1,50 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Python
+__pycache__/
+*.py[oc]
+*.pyo
+build/
+dist/
+wheels/
+*.egg-info/
+*.egg
+.venv
+venv/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.log
+
+# LangGraph API
+.langgraph_api
+
+# Node / Next.js (frontend)
+node_modules/
+frontend/node_modules/
+frontend/.next/
+.next/
+*.tsbuildinfo
+.npm
+.yarn/
+.pnp.*
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+app.log
+*.log
+frontend/*.log

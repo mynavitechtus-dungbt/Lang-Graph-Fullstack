@@ -1,0 +1,11 @@
+{
+    "python_version": "3.12",
+    "dockerfile_lines": [],
+    "dependencies": ["."],
+    "package_manager": "uv",
+    "graphs": {
+      "basic_agent": "./basic_agent.py:graph",
+      "human_in_the_loop": "./human_in_the_loop.py:graph"
+    },
+    "env": ".env"
+  }
