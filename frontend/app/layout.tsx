@@ -27,11 +27,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <CopilotKit runtimeUrl="/api/copilotkit" agent="basic_agent">
-          {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <CopilotKit
+          runtimeUrl="/api/copilotkit"
+          agent="graph"
+          showDevConsole={true}
+        >
+          <div className="flex min-h-dvh flex-col overflow-hidden">{children}</div>
         </CopilotKit>
       </body>
     </html>

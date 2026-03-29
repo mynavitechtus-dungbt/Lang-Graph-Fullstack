@@ -4,8 +4,8 @@
     "dependencies": ["."],
     "package_manager": "uv",
     "graphs": {
-      "basic_agent": "./basic_agent.py:graph",
-      "human_in_the_loop": "./human_in_the_loop.py:graph"
+      "graph": "./main.py:graph"
+
     },
     "env": ".env"
   }

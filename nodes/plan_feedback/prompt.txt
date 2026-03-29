@@ -1,0 +1,6 @@
+The user just saw a project plan and was offered Yes/No (or they can type in chat).
+
+Classify their latest message:
+- **approve** — They accept the plan, say yes, looks good, ship it, đồng ý, etc.
+- **revise** — They want changes, say no, missing pieces, wrong scope, or give edits.
+- **unclear** — You cannot tell; they need a simpler yes/no.

@@ -1,27 +1,27 @@
-"""Cấu hình logging — tên file log được truyền từ bên ngoài."""
+"""Logging setup — log file path is supplied by the caller."""
 
 import logging
 from pathlib import Path
 
 
 def setup_logging(
-    log_file: str | Path,
+    log_file: str | Path = "app.log",
     *,
     level: int = logging.INFO,
     logger_name: str | None = None,
 ) -> logging.Logger:
     """
-    Thiết lập logger ghi ra file với tên file được truyền vào.
+    Configure a logger that writes to a file at the given path.
 
     Args:
-        log_file: Đường dẫn file log (string hoặc Path).
-        level: Mức log (mặc định INFO).
-        logger_name: Tên logger (mặc định __name__ của module gọi).
+        log_file: Path to the log file (str or Path).
+        level: Log level (default INFO).
+        logger_name: Logger name (defaults to the calling module's __name__).
 
     Returns:
-        Logger đã được cấu hình.
+        The configured logger.
     """
-    log_path = Path(log_file).resolve()
+    log_path = Path("./logs/" + log_file).resolve()
     logger = logging.getLogger(logger_name or __name__)
     logger.setLevel(level)
 

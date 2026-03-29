@@ -10,14 +10,9 @@ import {
   
   const runtime = new CopilotRuntime({
     agents: {
-      basic_agent: new LangGraphAgent({
+      graph: new LangGraphAgent({
         deploymentUrl:  process.env.LANGGRAPH_DEPLOYMENT_URL || "",
-        graphId: "basic_agent",
-        langsmithApiKey: process.env.LANGSMITH_API_KEY || "",
-      }),
-      human_in_the_loop: new LangGraphAgent({
-        deploymentUrl:  process.env.LANGGRAPH_DEPLOYMENT_URL || "",
-        graphId: "human_in_the_loop",
+        graphId: "graph",
         langsmithApiKey: process.env.LANGSMITH_API_KEY || "",
       }),
     }
