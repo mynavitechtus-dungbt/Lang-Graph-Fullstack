@@ -7,5 +7,6 @@ DEFAULT_MODEL_NAME = "gpt-4o-mini"
 
 
 def get_model_name() -> str:
+    """Get the model name from the environment variable MODEL_NAME."""
     raw = (os.getenv("MODEL_NAME") or "").strip()
     return raw if raw else DEFAULT_MODEL_NAME

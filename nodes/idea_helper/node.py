@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from langchain_core.messages import SystemMessage, ToolMessage
-from langchain_openai import ChatOpenAI
 from langchain_core.runnables import RunnableConfig
+from langchain_openai import ChatOpenAI
 
 from nodes.llm_config import get_model_name
 from nodes.prompt_loader import load_prompt
@@ -30,10 +30,6 @@ async def idea_helper_node(
         if tc["name"] == "web_search":
             q = tc["args"].get("query", "") if isinstance(tc["args"], dict) else ""
             out = await web_search.ainvoke({"query": q})
-            tool_messages.append(
-                ToolMessage(content=out, tool_call_id=tc["id"], name="web_search")
-            )
-    second = await plain.ainvoke(
-        [system_message, *state["messages"], response, *tool_messages]
-    )
+            tool_messages.append(ToolMessage(content=out, tool_call_id=tc["id"], name="web_search"))
+    second = await plain.ainvoke([system_message, *state["messages"], response, *tool_messages])
     return {"messages": [response, *tool_messages, second]}

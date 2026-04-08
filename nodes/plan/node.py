@@ -23,16 +23,9 @@ async def plan_node(
     model = ChatOpenAI(model=get_model_name(), temperature=0.3)
     system_message = SystemMessage(content=PLAN_PROMPT)
     plan_msg = await model.ainvoke([system_message, *state["messages"]])
-    body = (
-        plan_msg.content
-        if isinstance(plan_msg.content, str)
-        else str(plan_msg.content)
-    )
+    body = plan_msg.content if isinstance(plan_msg.content, str) else str(plan_msg.content)
 
-    q = (
-        "Do you approve this plan? Choose Yes to continue or No to request "
-        "changes."
-    )
+    q = "Do you approve this plan? Choose Yes to continue or No to request changes."
     tc_md = str(uuid.uuid4())
     tc_btn = str(uuid.uuid4())
     ack = AIMessage(

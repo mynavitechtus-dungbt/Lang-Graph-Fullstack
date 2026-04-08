@@ -7,11 +7,12 @@ from langchain_core.tools import tool
 
 @tool
 def web_search(query: str) -> str:
-    """Search the web for facts, examples, or best practices. Use when the user needs up-to-date or external context."""
+    """Search the web for facts, examples, or best practices.
+
+    Use when the user needs up-to-date or external context.
+    """
     if not os.environ.get("TAVILY_API_KEY"):
-        return (
-            "Search is unavailable: set TAVILY_API_KEY in the environment (.env)."
-        )
+        return "Search is unavailable: set TAVILY_API_KEY in the environment (.env)."
     try:
         from tavily import TavilyClient
     except ImportError:

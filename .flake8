@@ -1,0 +1,13 @@
+# Aligns editor Flake8 (if installed) with Ruff in pyproject.toml — line length 100.
+# Ruff remains the primary linter; you do not need to pip-install flake8 for CI if you use Ruff only.
+[flake8]
+max-line-length = 100
+extend-ignore =
+    # Black/Ruff-compatible slice whitespace
+    E203,
+exclude =
+    .git,
+    .venv,
+    __pycache__,
+    .ruff_cache,
+    .mypy_cache,

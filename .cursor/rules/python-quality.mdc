@@ -1,0 +1,17 @@
+---
+description: Python quality — Ruff, mypy, and conventions for the my-agent repo
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Python (my-agent)
+
+When editing or adding Python files:
+
+1. **Format & lint**: Code must pass `ruff check .` and `ruff format .` (line length **100**, double quotes). The repo root `.flake8` matches this so editor Flake8 (if any) does not default to 79 characters.
+2. **Types**: Run `mypy .` — prefer explicit annotations on public functions; avoid unnecessary `Any`.
+3. **Imports**: Standard grouping (stdlib → third-party → local); rely on Ruff (`I`).
+4. **Third-party libraries**: Do not invent APIs — if unsure, verify real imports in the repo or the package docs.
+5. **After generating**: Say explicitly when the user should run `uv run ruff check . && uv run ruff format . && uv run mypy .`.
+
+Avoid: trailing whitespace, unused imports, bare `except:`, and duplicating logic that already exists — reuse `AgentState`, `WorkflowStage`, and existing nodes when appropriate.

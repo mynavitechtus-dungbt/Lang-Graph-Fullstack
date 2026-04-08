@@ -1,0 +1,22 @@
+---
+description: LangGraph graph, AgentState, and WorkflowStage — my-agent backend
+globs:
+  - "**/main.py"
+  - "**/workflow_stage.py"
+  - "nodes/**/*.py"
+alwaysApply: false
+---
+
+# LangGraph backend (my-agent)
+
+1. **Single graph export**: The compiled graph must remain `graph` in `main.py` as referenced by `langgraph.json` (`./main.py:graph`).
+
+2. **State**: `AgentState` (`nodes/state.py`) extends `CopilotKitState`; `workflow_stage` is a string at runtime — use `WorkflowStage` + `coerce_workflow_stage()` for routing logic.
+
+3. **Stages**: Add or change stages only in `workflow_stage.py` (`WorkflowStage`, `NEXT_STAGES` / `BACK_STAGES` if needed), then update `route_entry` in `main.py` and any `add_conditional_edges` maps so labels stay consistent.
+
+4. **New nodes**: Implement under `nodes/<name>/node.py`, register with `add_node`, connect with `add_edge` / `add_conditional_edges`, and avoid breaking CopilotKit message expectations.
+
+5. **LLM / tools**: Reuse `get_model_name()` from `nodes/llm_config.py`; Tavily search requires `TAVILY_API_KEY` (`nodes/tools/web_search.py`).
+
+6. **Quality**: After edits, Python changes should pass Ruff and mypy (see `python-quality` rule).

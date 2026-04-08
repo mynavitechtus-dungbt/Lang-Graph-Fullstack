@@ -21,7 +21,7 @@ def setup_logging(
     Returns:
         The configured logger.
     """
-    log_path = Path("./logs/" + log_file).resolve()
+    log_path = (Path("./logs") / log_file).resolve()
     logger = logging.getLogger(logger_name or __name__)
     logger.setLevel(level)
 

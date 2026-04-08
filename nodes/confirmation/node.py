@@ -5,10 +5,10 @@ import re
 from pathlib import Path
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from langgraph.constants import END
 from langgraph.types import Command
-from langchain_core.runnables import RunnableConfig
 
 from nodes.llm_config import get_model_name
 from nodes.prompt_loader import load_prompt
@@ -37,10 +37,8 @@ async def confirmation_handler(
     text = _last_human_text(state)
 
     model = ChatOpenAI(model=get_model_name(), temperature=0)
-    sys = SystemMessage(
-        content=CONFIRM_PROMPT
-        + "\nRespond with JSON only: {\"action\":\"plan\"|\"help\"|\"clarify\",\"note\":\"short reason\"}"
-    )
+    json_hint = '\nRespond with JSON only: {"action":"plan"|"help"|"clarify","note":"short reason"}'
+    sys = SystemMessage(content=CONFIRM_PROMPT + json_hint)
     structured = await model.ainvoke(
         [sys, HumanMessage(content=f"User message:\n{text or '(empty)'}")]
     )

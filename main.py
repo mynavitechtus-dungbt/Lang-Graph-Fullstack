@@ -9,47 +9,45 @@ from nodes.idea_helper.node import idea_helper_node
 from nodes.plan.node import plan_node
 from nodes.plan_feedback.node import plan_feedback_handler
 from nodes.state import AgentState
+from workflow_stage import WorkflowStage, coerce_workflow_stage
 
 load_dotenv()
 
 
-def route_entry(state: AgentState) -> str:
-    stage = state.get("workflow_stage") or "idea"
-    # After a finished plan, new user messages start a fresh idea pass.
-    if stage == "completed":
-        return "idea"
-    if stage == "awaiting_confirm":
-        return "awaiting_confirm"
-    if stage == "planning":
-        return "planning"
-    if stage == "awaiting_plan_feedback":
-        return "awaiting_plan_feedback"
-    if stage == "plan_revision":
-        return "plan_revision"
-    return "idea"
+def route_entry(state: AgentState) -> WorkflowStage:
+    """Route the entry point to the appropriate stage."""
+    stage = coerce_workflow_stage(state.get("workflow_stage", WorkflowStage.IDEA))
+
+    if stage.is_next():
+        return stage
+
+    if stage.is_back():
+        return WorkflowStage.IDEA
+
+    return WorkflowStage.IDEA
 
 
-graph = StateGraph(AgentState)
-graph.add_node("idea_analyzer", idea_analyzer_node)
-graph.add_node("confirmation_handler", confirmation_handler)
-graph.add_node("idea_helper", idea_helper_node)
-graph.add_node("plan_node", plan_node)
-graph.add_node("plan_feedback_handler", plan_feedback_handler)
+_builder = StateGraph(AgentState)
+_builder.add_node("idea_analyzer", idea_analyzer_node)
+_builder.add_node("confirmation_handler", confirmation_handler)
+_builder.add_node("idea_helper", idea_helper_node)
+_builder.add_node("plan_node", plan_node)
+_builder.add_node("plan_feedback_handler", plan_feedback_handler)
 
-graph.add_conditional_edges(
+_builder.add_conditional_edges(
     START,
     route_entry,
     {
-        "idea": "idea_analyzer",
-        "awaiting_confirm": "confirmation_handler",
-        "planning": "plan_node",
-        "awaiting_plan_feedback": "plan_feedback_handler",
-        "plan_revision": "plan_node",
+        WorkflowStage.IDEA: "idea_analyzer",
+        WorkflowStage.AWAITING_CONFIRM: "confirmation_handler",
+        WorkflowStage.PLANNING: "plan_node",
+        WorkflowStage.AWAITING_PLAN_FEEDBACK: "plan_feedback_handler",
+        WorkflowStage.PLAN_REVISION: "plan_node",
     },
 )
 
-graph.add_edge("idea_analyzer", END)
-graph.add_edge("idea_helper", END)
-graph.add_edge("plan_node", END)
+_builder.add_edge("idea_analyzer", END)
+_builder.add_edge("idea_helper", END)
+_builder.add_edge("plan_node", END)
 
-graph = graph.compile()
+graph = _builder.compile()

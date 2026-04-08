@@ -47,16 +47,17 @@ async def plan_feedback_handler(state: AgentState) -> Command:
             action = data.get("action", "unclear")
     except json.JSONDecodeError:
         tl = text.lower()
-        if re.match(r"^(yes|y|đúng|ok|approve|đồng ý|chốt)\b", tl):
+        if re.match(r"^(yes|y|ok|approve|sure|ship|go|lgtm)\b", tl):
             action = "approve"
-        elif re.match(r"^(no|n|chưa|reject)\b", tl):
+        elif re.match(r"^(no|n|not yet|reject|wait|hold)\b", tl):
             action = "revise"
 
     if action == "approve":
         done = AIMessage(
             content=(
-                "**Plan saved.** For this demo, your plan is treated as uploaded to **Google Drive** "
-                "(no real file upload in this environment). You can copy the Markdown from the panel above anytime."
+                "**Plan saved.** For this demo, your plan is treated as uploaded to "
+                "**Google Drive** (no real file upload in this environment). "
+                "You can copy the Markdown from the panel above anytime."
             )
         )
         return Command(
@@ -78,7 +79,8 @@ async def plan_feedback_handler(state: AgentState) -> Command:
 
     clarify = AIMessage(
         content=(
-            "Please type **yes** if you approve the plan (we will show it as saved to Google Drive), "
+            "Please type **yes** if you approve the plan "
+            "(we will show it as saved to Google Drive), "
             "or **no** and describe what to change."
         )
     )
