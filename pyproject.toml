@@ -11,6 +11,10 @@ dependencies = [
     "langgraph>=1.0.10",
     "python-dotenv>=1.0.1",
     "tavily-python>=0.7.23",
+    "cocoindex[embeddings]>=0.3.34,<1",
+    "python-dotenv>=1.0.1",
+    "pgvector>=0.4.1",
+    "psycopg[binary,pool]",
 ]
 
 [dependency-groups]

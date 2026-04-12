@@ -1,21 +1,18 @@
 """Idea analyzer node."""
 
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
-from langchain_core.messages import (
-    AIMessage,
-    BaseMessage,
-    HumanMessage,
-    SystemMessage,
-)
-from langchain_core.runnables import RunnableConfig, ensure_config
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.runnables.config import RunnableConfig, ensure_config, merge_configs
 from langchain_openai import ChatOpenAI
+from langgraph.constants import TAG_NOSTREAM
 from pydantic import BaseModel, Field
 
 # Logging config
 from log_config import setup_logging
 from nodes.llm_config import get_model_name
+from nodes.message_utils import ensure_openai_tool_roundtrip
 from nodes.prompt_loader import load_prompt
 from nodes.state import AgentState
 
@@ -27,7 +24,7 @@ STAGE_ROUTER_PROMPT = load_prompt(_NODE_DIR, "stage_router.txt")
 
 
 class IdeaAnalyzerStage(BaseModel):
-    """Idea analyzer stage."""
+    """Stage router output (second call only)."""
 
     workflow_stage: Literal["idea", "awaiting_confirm"] = Field(
         description=(
@@ -55,60 +52,70 @@ async def _invoke_model(
     model: ChatOpenAI,
     messages: list[BaseMessage],
     cfg: RunnableConfig,
-) -> str:
-    """Invoke the model."""
-    raw_content = await model.ainvoke(messages, config=cfg)
-    content = raw_content.content
-    reply = content if isinstance(content, str) else str(content)
-    return reply.strip()
+) -> AIMessage:
+    """Invoke the model (streams to LangGraph when config has no TAG_NOSTREAM).
+
+    Returns the same ``AIMessage`` instance (optionally ``model_copy``) so ``id``
+    matches the streamed run; LangGraph's message stream dedupes on_chain_end vs
+    on_llm_end when ids match.
+    """
+    raw = await model.ainvoke(messages, config=cfg)
+    if not isinstance(raw, AIMessage):
+        return AIMessage(content=str(raw))
+    content = raw.content
+    if isinstance(content, str):
+        stripped = content.strip()
+        if stripped != content:
+            return raw.model_copy(update={"content": stripped})
+        return raw
+    return raw
 
 
 async def idea_analyzer_node(
     state: AgentState,
     config: RunnableConfig | None = None,
 ):
-    """Idea analyzer node."""
+    """Idea analyzer: streamed reply, then silent stage classification."""
 
-    # configure the model
     cfg = ensure_config(config)
     model = ChatOpenAI(model=get_model_name())
 
-    # messages to the model
     system_message = SystemMessage(content=IDEA_ANALYZER_PROMPT)
-    messages = [system_message, *state["messages"]]
+    history = ensure_openai_tool_roundtrip(list(state.get("messages") or []))
+    messages = [system_message, *history]
 
-    reply = await _invoke_model(model, messages, cfg)
+    # Main reply: do NOT use TAG_NOSTREAM — LangGraph forwards LLM token streams to the UI.
+    assistant_msg = await _invoke_model(model, messages, cfg)
+    reply_text = (
+        assistant_msg.content
+        if isinstance(assistant_msg.content, str)
+        else str(assistant_msg.content)
+    )
+    reply_text = reply_text.strip()
 
-    # if no reply, return fallback message this is edge case
-    if not reply:
+    if not reply_text:
         fallback = (
             "Please share one concrete idea (a project, product, or topic) you'd like to explore."
         )
         logger.warning("idea_analyzer_node No reply, returning fallback message")
         return {"messages": [AIMessage(content=fallback)], "workflow_stage": "idea"}
 
-    # route to the appropriate workflow stage
     router = ChatOpenAI(model=get_model_name(), temperature=0).with_structured_output(
         IdeaAnalyzerStage,
         method="function_calling",
-        include_raw=True,
+        include_raw=False,
     )
     user_snippet = _last_human_text(state)
-    logger.info("idea_analyzer_node User snippet: %s", user_snippet)
-
-    # create human message for router
     router_human = HumanMessage(
-        content=(f"User's latest message:\n{user_snippet or '(none)'}\n\nAssistant reply:\n{reply}")
+        content=(
+            f"User's latest message:\n{user_snippet or '(none)'}\n\nAssistant reply:\n{reply_text}"
+        )
     )
     router_sys = SystemMessage(content=STAGE_ROUTER_PROMPT)
-    routed = await router.ainvoke([router_sys, router_human], config=cfg)
-    logger.info("idea_analyzer_node Routed: %s", routed)
-    parsed = routed["parsed"]
-    if parsed is None:
-        logger.error("idea_analyzer stage router parse failed: %s", routed.get("parsing_error"))
-        wf = "idea"
-    else:
-        wf = parsed.workflow_stage
+    silent_cfg = merge_configs(cfg, {"tags": [TAG_NOSTREAM]})
+    routed = await router.ainvoke([router_sys, router_human], config=silent_cfg)
+    wf = cast(IdeaAnalyzerStage, routed).workflow_stage
+    logger.info("idea_analyzer_node workflow_stage=%s", wf)
 
-    msg = AIMessage(content=reply)
-    return {"messages": [msg], "workflow_stage": wf}
+    # Reuse the streamed message's id so StreamMessagesHandler skips duplicate emit.
+    return {"messages": [assistant_msg], "workflow_stage": wf}
